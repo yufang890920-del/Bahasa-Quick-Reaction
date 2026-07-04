@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1B2C5C">
+<title>BahasaFlow · 印尼语流利度训练营</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🇮🇩</text></svg>">
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  * { -webkit-tap-highlight-color: transparent; }
+  body { margin: 0; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const { useState, useMemo, useRef, useEffect, useCallback } = React;
+
+/* ============================================================
+   BAHASA FLOW — 印尼语流利度训练营 v2
+   针对三大问题重新设计：
+   ① 反应不过来 → ⚡限时反应训练（倒计时压力下秒答）
+   ② 听说不流畅 → 🎧听力训练（真人TTS语速可调）+ 🎬场景对话（限时应答）
+   ③ 发音不准确 → 🎤跟读评分（语音识别逐词比对打分）
+   技术：Web Speech API（TTS: id-ID 发音 / STT: 语音识别评分）
+   ============================================================ */
+
+/* ---------- 场景语料库（150核心词的场景化应用） ---------- */
+const SCENES = [
+  { id: "warung", name: "路边餐馆", icon: "🍜",
+    lines: [
+      { id: "Mau pesan apa?", zh: "想点什么？", replies: [["Saya mau nasi goreng satu.", "我要一份炒饭。", true], ["Saya dari Tiongkok.", "我来自中国。", false], ["Belok kiri.", "向左转。", false]] },
+      { id: "Mau minum apa?", zh: "想喝什么？", replies: [["Es teh satu, tolong.", "请来一杯冰茶。", true], ["Umur saya dua puluh.", "我20岁。", false], ["Sampai jumpa!", "再见！", false]] },
+      { id: "Pedas atau tidak pedas?", zh: "要辣还是不辣？", replies: [["Tidak pedas, tolong.", "请不要辣。", true], ["Saya suka musim hujan.", "我喜欢雨季。", false], ["Ini bukan tas saya.", "这不是我的包。", false]] },
+      { id: "Semuanya empat puluh ribu.", zh: "一共四万盾。", replies: [["Baik, ini uangnya.", "好的，给你钱。", true], ["Kepala saya sakit.", "我头疼。", false], ["Kamu tinggal di mana?", "你住哪里？", false]] },
+      { id: "Terima kasih, datang lagi ya!", zh: "谢谢，欢迎再来！", replies: [["Sama-sama, enak sekali!", "不客气，非常好吃！", true], ["Berapa umur kamu?", "你多大？", false], ["Saya sedang tidur.", "我正在睡觉。", false]] },
+    ] },
+  { id: "jalan", name: "街头问路", icon: "🗺️",
+    lines: [
+      { id: "Permisi, mau ke mana?", zh: "打扰一下，要去哪里？", replies: [["Saya mau ke stasiun.", "我要去车站。", true], ["Saya sudah makan.", "我吃过了。", false], ["Hobi saya membaca.", "我的爱好是读书。", false]] },
+      { id: "Stasiun itu tidak jauh dari sini.", zh: "车站离这里不远。", replies: [["Bagaimana caranya ke sana?", "怎么去那里？", true], ["Saya mau pesan mie.", "我想点面。", false], ["Dia kakak saya.", "他是我哥哥。", false]] },
+      { id: "Lurus terus, lalu belok kanan.", zh: "一直直走，然后右转。", replies: [["Berapa lama dari sini?", "从这里要多久？", true], ["Saya tidak suka kopi.", "我不喜欢咖啡。", false], ["Selamat ulang tahun!", "生日快乐！", false]] },
+      { id: "Kira-kira sepuluh menit jalan kaki.", zh: "步行大约十分钟。", replies: [["Baik, terima kasih banyak!", "好的，非常感谢！", true], ["Saya lapar sekali.", "我好饿。", false], ["Boleh saya pinjam pulpen?", "能借支笔吗？", false]] },
+    ] },
+  { id: "pasar", name: "市场砍价", icon: "🛍️",
+    lines: [
+      { id: "Silakan, mau cari apa?", zh: "欢迎，想找什么？", replies: [["Saya mau lihat baju itu.", "我想看看那件衣服。", true], ["Sekarang jam tujuh.", "现在七点。", false], ["Saya akan pulang besok.", "我明天回去。", false]] },
+      { id: "Ini seratus ribu rupiah.", zh: "这个十万盾。", replies: [["Wah, terlalu mahal! Bisa kurang?", "哇，太贵了！能便宜点吗？", true], ["Saya merasa senang.", "我感觉很开心。", false], ["Kapan kamu datang?", "你什么时候来？", false]] },
+      { id: "Boleh, delapan puluh ribu ya.", zh: "可以，八万吧。", replies: [["Bagaimana kalau tujuh puluh ribu?", "七万怎么样？", true], ["Ayah saya seorang guru.", "我爸爸是老师。", false], ["Hari ini hujan.", "今天下雨。", false]] },
+      { id: "Ya sudah, boleh. Mau warna apa?", zh: "好吧，可以。要什么颜色？", replies: [["Saya mau yang biru.", "我要蓝色的。", true], ["Saya perlu ke dokter.", "我需要看医生。", false], ["Kamu kelihatan lelah.", "你看起来很累。", false]] },
+    ] },
+  { id: "teman", name: "朋友闲聊", icon: "☕",
+    lines: [
+      { id: "Halo! Apa kabar?", zh: "你好！最近怎么样？", replies: [["Baik-baik saja! Kamu bagaimana?", "挺好的！你呢？", true], ["Ini lima puluh ribu.", "这是五万盾。", false], ["Belok kiri di sana.", "在那里左转。", false]] },
+      { id: "Kamu sedang apa akhir-akhir ini?", zh: "你最近在忙什么？", replies: [["Saya sedang belajar bahasa Indonesia.", "我在学印尼语。", true], ["Satu porsi nasi goreng.", "一份炒饭。", false], ["Ukuran ini terlalu besar.", "这个尺码太大了。", false]] },
+      { id: "Wah hebat! Sudah berapa lama?", zh: "哇厉害！学多久了？", replies: [["Sudah satu bulan.", "已经一个月了。", true], ["Harganya dua puluh ribu.", "价格是两万。", false], ["Stasiun ada di kanan.", "车站在右边。", false]] },
+      { id: "Bagaimana kalau kita makan siang bersama?", zh: "我们一起吃午饭怎么样？", replies: [["Ide yang bagus! Ayo!", "好主意！走吧！", true], ["Saya bukan orang Jepang.", "我不是日本人。", false], ["Tolong tunggu di luar.", "请在外面等。", false]] },
+      { id: "Kamu suka makanan apa?", zh: "你喜欢什么食物？", replies: [["Saya paling suka makanan pedas.", "我最喜欢辣的。", true], ["Besok hari Senin.", "明天是周一。", false], ["Dia lebih tinggi dari saya.", "他比我高。", false]] },
+    ] },
+  { id: "telepon", name: "电话预约", icon: "📞",
+    lines: [
+      { id: "Halo, dengan siapa saya bicara?", zh: "喂，请问是哪位？", replies: [["Halo, nama saya Wei.", "喂，我叫伟。", true], ["Ini baju baru saya.", "这是我的新衣服。", false], ["Saya naik bus.", "我坐公交。", false]] },
+      { id: "Ada yang bisa saya bantu?", zh: "有什么可以帮您？", replies: [["Saya mau membuat janji untuk besok.", "我想预约明天。", true], ["Rumah saya besar.", "我家很大。", false], ["Saya suka warna merah.", "我喜欢红色。", false]] },
+      { id: "Besok jam berapa Anda ada waktu?", zh: "明天几点您有空？", replies: [["Jam sepuluh pagi bisa?", "早上十点可以吗？", true], ["Nasi goreng enak sekali.", "炒饭很好吃。", false], ["Itu bukan buku saya.", "那不是我的书。", false]] },
+      { id: "Bisa. Sampai jumpa besok ya.", zh: "可以。明天见。", replies: [["Baik, terima kasih. Sampai jumpa!", "好的谢谢，明天见！", true], ["Saya sedang makan.", "我正在吃饭。", false], ["Kenapa kamu sedih?", "你为什么难过？", false]] },
+    ] },
+  { id: "sakit", name: "看病就医", icon: "🏥",
+    lines: [
+      { id: "Selamat pagi, ada keluhan apa?", zh: "早上好，哪里不舒服？", replies: [["Kepala saya sakit dari kemarin.", "我从昨天开始头疼。", true], ["Saya mau beli buah.", "我想买水果。", false], ["Kantor buka jam sembilan.", "办公室九点开门。", false]] },
+      { id: "Apakah Anda juga demam?", zh: "您也发烧吗？", replies: [["Ya, badan saya panas.", "是的，我身体发热。", true], ["Ya, saya suka musik.", "是的，我喜欢音乐。", false], ["Ya, ini murah sekali.", "是的，这很便宜。", false]] },
+      { id: "Minum obat ini dua kali sehari.", zh: "这个药一天吃两次。", replies: [["Baik, sebelum atau sesudah makan?", "好的，饭前还是饭后？", true], ["Baik, saya mau es teh.", "好的，我要冰茶。", false], ["Baik, belok kanan ya.", "好的，右转对吧。", false]] },
+      { id: "Sesudah makan. Istirahat yang cukup ya.", zh: "饭后。要好好休息。", replies: [["Terima kasih banyak, Dokter.", "非常感谢，医生。", true], ["Berapa harganya baju ini?", "这件衣服多少钱？", false], ["Saya paling suka hujan.", "我最喜欢下雨。", false]] },
+    ] },
+];
+
+/* 闪电反应题库：核心词 + 高频短句（中→印，训练输出反应） */
+const FLASH = [
+  ["我想要…", "Saya mau..."], ["多少钱？", "Berapa harganya?"], ["在哪里？", "Di mana?"],
+  ["我不明白", "Saya tidak mengerti"], ["请再说一遍", "Tolong ulangi lagi"], ["没关系", "Tidak apa-apa"],
+  ["我已经吃了", "Saya sudah makan"], ["我正在学习", "Saya sedang belajar"], ["明天见", "Sampai jumpa besok"],
+  ["太贵了", "Terlalu mahal"], ["能便宜点吗", "Bisa kurang?"], ["我可以问吗", "Boleh saya bertanya?"],
+  ["我饿了", "Saya lapar"], ["非常好吃", "Enak sekali"], ["请稍等", "Tunggu sebentar"],
+  ["向左转", "Belok kiri"], ["一直直走", "Lurus terus"], ["要多久", "Berapa lama?"],
+  ["我同意", "Saya setuju"], ["好主意", "Ide yang bagus"], ["我很开心", "Saya senang sekali"],
+  ["你在干什么", "Kamu sedang apa?"], ["什么时候", "Kapan?"], ["为什么", "Kenapa?"],
+  ["我不喜欢辣", "Saya tidak suka pedas"], ["请给我水", "Tolong beri saya air"], ["一起走吧", "Ayo kita pergi"],
+  ["我头疼", "Kepala saya sakit"], ["我需要休息", "Saya perlu istirahat"], ["谢谢你", "Terima kasih"],
+];
+
+/* 听力+跟读句库（由短到长分3级） */
+const SPEAK = [
+  { lv: 1, items: ["Selamat pagi", "Apa kabar?", "Terima kasih", "Sampai jumpa", "Tidak apa-apa", "Permisi", "Enak sekali", "Berapa harganya?"] },
+  { lv: 2, items: ["Saya mau pesan nasi goreng", "Di mana stasiun terdekat?", "Saya sedang belajar bahasa Indonesia", "Bisa kurang sedikit?", "Tolong tunggu sebentar ya", "Saya tidak suka pedas"] },
+  { lv: 3, items: ["Bagaimana kalau kita makan siang bersama besok?", "Saya sudah belajar bahasa Indonesia selama satu bulan", "Permisi, bisa tolong ulangi sekali lagi dengan pelan?", "Menurut saya, makanan di warung ini paling enak"] },
+];
+
+const shuffle = (a) => { const r = [...a]; for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]]; } return r; };
+
+/* ---------- Web Speech API ---------- */
+function speak(text, rate = 0.85) {
+  return new Promise((res) => {
+    try {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "id-ID"; u.rate = rate;
+      const voices = window.speechSynthesis.getVoices();
+      const idVoice = voices.find(v => v.lang.startsWith("id"));
+      if (idVoice) u.voice = idVoice;
+      u.onend = res; u.onerror = res;
+      window.speechSynthesis.speak(u);
+    } catch { res(); }
+  });
+}
+function getRecognizer() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return null;
+  const r = new SR(); r.lang = "id-ID"; r.interimResults = false; r.maxAlternatives = 3;
+  return r;
+}
+const norm = (s) => s.toLowerCase().replace(/[.,!?'"-]/g, "").trim();
+function scorePronunciation(target, heard) {
+  const t = norm(target).split(/\s+/), h = norm(heard).split(/\s+/);
+  const hits = t.map(w => h.includes(w));
+  return { pct: Math.round(hits.filter(Boolean).length / t.length * 100), words: t.map((w, i) => [w, hits[i]]) };
+}
+
+/* ---------- 样式 ---------- */
+const C = { ink: "#1E2749", indigoDeep: "#1B2C5C", sand: "#F7F3EB", paper: "#FFFDF8", merah: "#C93A3A", gold: "#C9962E", teal: "#3E7C7B", line: "#E4DCCB", faint: "#8B8574" };
+const font = { display: "'Georgia', serif", body: "-apple-system, 'PingFang SC', 'Noto Sans SC', sans-serif" };
+const btnPrimary = { all: "unset", cursor: "pointer", textAlign: "center", padding: "14px 0", borderRadius: 12, background: C.indigoDeep, color: "#F2E8D5", fontWeight: 700, fontSize: 15, width: "100%", boxSizing: "border-box" };
+const btnGhost = { ...btnPrimary, background: "transparent", border: `1.5px solid ${C.line}`, color: C.ink, fontWeight: 600 };
+
+/* ---------- ⚡ 闪电反应 ---------- */
+function FlashDrill({ onExit }) {
+  const [pool] = useState(() => shuffle(FLASH).slice(0, 10));
+  const [i, setI] = useState(0);
+  const [left, setLeft] = useState(6);
+  const [state, setState] = useState("go"); // go | reveal | done
+  const [selfOK, setSelfOK] = useState(0);
+  const timer = useRef(null);
+
+  useEffect(() => {
+    if (state !== "go") return;
+    setLeft(6);
+    timer.current = setInterval(() => setLeft(l => {
+      if (l <= 1) { clearInterval(timer.current); setState("reveal"); speak(pool[i][1], 0.9); return 0; }
+      return l - 1;
+    }), 1000);
+    return () => clearInterval(timer.current);
+  }, [i, state, pool]);
+
+  const grade = (ok) => {
+    if (ok) setSelfOK(s => s + 1);
+    if (i + 1 >= pool.length) setState("done");
+    else { setI(i + 1); setState("go"); }
+  };
+
+  if (state === "done") return (
+    <div style={{ textAlign: "center", padding: "20px 0" }}>
+      <div style={{ fontSize: 44 }}>⚡</div>
+      <h3 style={{ fontFamily: font.display, fontSize: 26, color: C.indigoDeep, margin: "8px 0 4px" }}>{selfOK} / {pool.length}</h3>
+      <p style={{ color: C.faint, fontSize: 14, margin: "0 0 20px" }}>6秒内能脱口而出的句子数。目标是连续3天满分——那时你的反应就自动化了。</p>
+      <div style={{ display: "grid", gap: 10 }}>
+        <button style={{ ...btnPrimary, background: C.merah }} onClick={() => { setI(0); setSelfOK(0); setState("go"); }}>再来一轮（换题）</button>
+        <button style={btnGhost} onClick={onExit}>返回</button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ textAlign: "center" }}>
+      <p style={{ fontSize: 13, color: C.faint, margin: "0 0 4px" }}>第 {i + 1}/{pool.length} 题 · 看到中文，<b>立刻大声说出印尼语</b></p>
+      <div style={{ position: "relative", height: 6, background: C.line, borderRadius: 99, margin: "10px 0 26px", overflow: "hidden" }}>
+        <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${left / 6 * 100}%`, background: left <= 2 ? C.merah : C.gold, transition: "width 1s linear" }} />
+      </div>
+      <h2 style={{ fontSize: 32, margin: "0 0 8px", color: C.ink }}>{pool[i][0]}</h2>
+      {state === "go" ? (
+        <>
+          <p style={{ fontSize: 40, fontFamily: font.display, color: left <= 2 ? C.merah : C.gold, margin: "16px 0" }}>{left}</p>
+          <button style={btnGhost} onClick={() => { clearInterval(timer.current); setState("reveal"); speak(pool[i][1], 0.9); }}>说完了 / 直接看答案</button>
+        </>
+      ) : (
+        <>
+          <p style={{ fontFamily: font.display, fontStyle: "italic", fontSize: 24, color: C.indigoDeep, margin: "18px 0 6px" }}>{pool[i][1]}</p>
+          <button onClick={() => speak(pool[i][1], 0.85)} style={{ all: "unset", cursor: "pointer", fontSize: 13, color: C.teal, fontWeight: 700 }}>🔊 再听一遍</button>
+          <p style={{ fontSize: 13, color: C.faint, margin: "18px 0 10px" }}>你在倒计时内说对了吗？（诚实自评）</p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <button style={{ ...btnPrimary, background: C.teal }} onClick={() => grade(true)}>✓ 说对了</button>
+            <button style={{ ...btnPrimary, background: C.merah }} onClick={() => grade(false)}>✗ 没反应过来</button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ---------- 🎧 听力训练 ---------- */
+function ListenDrill({ onExit }) {
+  const [lv, setLv] = useState(1);
+  const [rate, setRate] = useState(0.75);
+  const pool = useMemo(() => shuffle(SPEAK.find(x => x.lv === lv).items).slice(0, 6), [lv]);
+  const [i, setI] = useState(0);
+  const [revealed, setRevealed] = useState(false);
+  const [plays, setPlays] = useState(0);
+  const cur = pool[i % pool.length];
+
+  const play = () => { speak(cur, rate); setPlays(p => p + 1); };
+  const next = () => { setI(i + 1); setRevealed(false); setPlays(0); };
+
+  return (
+    <div>
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+        {[1, 2, 3].map(l => (
+          <button key={l} onClick={() => { setLv(l); setI(0); setRevealed(false); }} style={{ all: "unset", cursor: "pointer", padding: "6px 14px", borderRadius: 99, fontSize: 13, fontWeight: 700, background: lv === l ? C.indigoDeep : "transparent", color: lv === l ? "#F2E8D5" : C.faint, border: `1.5px solid ${lv === l ? C.indigoDeep : C.line}` }}>
+            {l === 1 ? "短句" : l === 2 ? "长句" : "复合句"}
+          </button>
+        ))}
+        <button onClick={() => setRate(r => r >= 1 ? 0.6 : r + 0.15)} style={{ all: "unset", cursor: "pointer", padding: "6px 14px", borderRadius: 99, fontSize: 13, fontWeight: 700, marginLeft: "auto", color: C.gold, border: `1.5px solid ${C.gold}66` }}>
+          语速 {rate <= 0.65 ? "慢" : rate <= 0.8 ? "中" : "快"}
+        </button>
+      </div>
+      <div style={{ textAlign: "center", padding: "18px 0" }}>
+        <p style={{ fontSize: 13, color: C.faint }}>先听，<b>不看文字</b>，在脑中理解意思后再揭晓</p>
+        <button onClick={play} style={{ all: "unset", cursor: "pointer", width: 96, height: 96, borderRadius: "50%", background: C.indigoDeep, color: "#F2E8D5", fontSize: 38, boxShadow: "0 8px 24px rgba(27,44,92,.35)", margin: "14px 0", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>🔊</button>
+        <p style={{ fontSize: 12, color: C.faint }}>已播放 {plays} 次（听懂前可反复听）</p>
+        {revealed ? (
+          <div style={{ margin: "16px 0" }}>
+            <p style={{ fontFamily: font.display, fontStyle: "italic", fontSize: 22, color: C.indigoDeep, margin: "0 0 16px" }}>{cur}</p>
+            <p style={{ fontSize: 13, color: C.teal, margin: "0 0 18px" }}>现在跟着读一遍，然后进入下一句 →</p>
+            <button style={btnPrimary} onClick={next}>下一句</button>
+          </div>
+        ) : (
+          <button style={{ ...btnGhost, marginTop: 12 }} onClick={() => setRevealed(true)}>听懂了，揭晓原文</button>
+        )}
+        <button style={{ all: "unset", cursor: "pointer", display: "block", margin: "18px auto 0", fontSize: 13, color: C.faint }} onClick={onExit}>← 返回</button>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- 🎤 跟读发音评分 ---------- */
+function SpeakDrill({ onExit }) {
+  const [lv, setLv] = useState(1);
+  const pool = useMemo(() => shuffle(SPEAK.find(x => x.lv === lv).items), [lv]);
+  const [i, setI] = useState(0);
+  const [listening, setListening] = useState(false);
+  const [result, setResult] = useState(null);
+  const [err, setErr] = useState(null);
+  const cur = pool[i % pool.length];
+  const supported = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+
+  const record = () => {
+    const rec = getRecognizer();
+    if (!rec) { setErr("nosupport"); return; }
+    setResult(null); setErr(null); setListening(true);
+    rec.onresult = (e) => {
+      const heard = e.results[0][0].transcript;
+      setResult({ heard, ...scorePronunciation(cur, heard) });
+      setListening(false);
+    };
+    rec.onerror = (e) => { setErr(e.error === "not-allowed" ? "mic" : "other"); setListening(false); };
+    rec.onend = () => setListening(false);
+    try { rec.start(); } catch { setErr("other"); setListening(false); }
+  };
+
+  return (
+    <div>
+      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+        {[1, 2, 3].map(l => (
+          <button key={l} onClick={() => { setLv(l); setI(0); setResult(null); }} style={{ all: "unset", cursor: "pointer", padding: "6px 14px", borderRadius: 99, fontSize: 13, fontWeight: 700, background: lv === l ? C.indigoDeep : "transparent", color: lv === l ? "#F2E8D5" : C.faint, border: `1.5px solid ${lv === l ? C.indigoDeep : C.line}` }}>
+            Lv{l}
+          </button>
+        ))}
+      </div>
+      <p style={{ fontSize: 13, color: C.faint, margin: "0 0 6px", textAlign: "center" }}>先听示范 → 再按录音跟读 → 系统识别你的发音逐词打分</p>
+      <p style={{ fontFamily: font.display, fontStyle: "italic", fontSize: 24, color: C.indigoDeep, textAlign: "center", margin: "12px 0 18px" }}>
+        {result ? result.words.map(([w, ok], k) => (
+          <span key={k} style={{ color: ok ? C.teal : C.merah, borderBottom: ok ? "none" : `2px solid ${C.merah}` }}>{w} </span>
+        )) : cur}
+      </p>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+        <button style={{ ...btnPrimary, background: C.teal }} onClick={() => speak(cur, 0.75)}>🔊 听示范</button>
+        <button style={{ ...btnPrimary, background: listening ? C.merah : C.indigoDeep }} onClick={record} disabled={listening}>
+          {listening ? "● 正在听你说…" : "🎤 录音跟读"}
+        </button>
+      </div>
+      {result && (
+        <div style={{ background: C.paper, border: `1px solid ${C.line}`, borderRadius: 14, padding: "14px 16px", marginBottom: 14 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+            <span style={{ fontFamily: font.display, fontSize: 30, color: result.pct >= 80 ? C.teal : result.pct >= 50 ? C.gold : C.merah, fontWeight: 700 }}>{result.pct}分</span>
+            <span style={{ fontSize: 12, color: C.faint }}>{result.pct >= 80 ? "发音很清晰！" : result.pct >= 50 ? "不错，红字的词再练" : "别灰心，先听示范再逐词模仿"}</span>
+          </div>
+          <p style={{ fontSize: 12.5, color: C.faint, margin: "8px 0 0" }}>系统听到：「{result.heard}」</p>
+        </div>
+      )}
+      {err === "nosupport" && <p style={{ fontSize: 13, color: C.merah, textAlign: "center" }}>当前浏览器不支持语音识别，请改用 Chrome 浏览器打开。</p>}
+      {err === "mic" && <p style={{ fontSize: 13, color: C.merah, textAlign: "center" }}>需要麦克风权限才能评分，请在浏览器设置中允许。</p>}
+      {err === "other" && <p style={{ fontSize: 13, color: C.merah, textAlign: "center" }}>没听清，请靠近麦克风再试一次。</p>}
+      <div style={{ display: "grid", gap: 10, marginTop: 6 }}>
+        <button style={btnGhost} onClick={() => { setI(i + 1); setResult(null); setErr(null); }}>下一句 →</button>
+        <button style={{ all: "unset", cursor: "pointer", textAlign: "center", fontSize: 13, color: C.faint }} onClick={onExit}>← 返回</button>
+      </div>
+      {!supported && <p style={{ fontSize: 12, color: C.faint, textAlign: "center", marginTop: 10 }}>提示：发音评分功能在 Chrome 中体验最佳。</p>}
+    </div>
+  );
+}
+
+/* ---------- 🎬 场景对话（限时应答 + 全程语音） ---------- */
+function SceneDrill({ scene, onExit }) {
+  const [i, setI] = useState(0);
+  const [left, setLeft] = useState(8);
+  const [picked, setPicked] = useState(null);
+  const [score, setScore] = useState(0);
+  const [done, setDone] = useState(false);
+  const [showZh, setShowZh] = useState(false);
+  const timer = useRef(null);
+  const line = scene.lines[i];
+  const options = useMemo(() => shuffle(line.replies), [line]);
+
+  useEffect(() => {
+    speak(line.id, 0.8);
+    setLeft(8); setPicked(null); setShowZh(false);
+    timer.current = setInterval(() => setLeft(l => {
+      if (l <= 1) { clearInterval(timer.current); setPicked("timeout"); return 0; }
+      return l - 1;
+    }), 1000);
+    return () => { clearInterval(timer.current); window.speechSynthesis.cancel(); };
+  }, [i, line]);
+
+  const pick = (r) => {
+    if (picked !== null) return;
+    clearInterval(timer.current);
+    setPicked(r);
+    if (r[2]) { setScore(s => s + 1); speak(r[0], 0.85); }
+  };
+  const next = () => { if (i + 1 >= scene.lines.length) setDone(true); else setI(i + 1); };
+
+  if (done) return (
+    <div style={{ textAlign: "center", padding: "20px 0" }}>
+      <div style={{ fontSize: 44 }}>{scene.icon}</div>
+      <h3 style={{ fontFamily: font.display, fontSize: 24, color: C.indigoDeep, margin: "8px 0 4px" }}>{scene.name} · {score}/{scene.lines.length}</h3>
+      <p style={{ color: C.faint, fontSize: 14, margin: "0 0 20px" }}>
+        {score === scene.lines.length ? "全对！这个场景你已经能实战了。" : "把没答对的回合重跑一遍——真实对话中对方不会给你第二次8秒。"}
+      </p>
+      <div style={{ display: "grid", gap: 10 }}>
+        <button style={{ ...btnPrimary, background: C.merah }} onClick={() => { setI(0); setScore(0); setDone(false); }}>重跑本场景</button>
+        <button style={btnGhost} onClick={onExit}>选择其他场景</button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: C.indigoDeep }}>{scene.icon} {scene.name} · 回合 {i + 1}/{scene.lines.length}</span>
+        <span style={{ fontSize: 13, color: left <= 3 ? C.merah : C.faint, fontWeight: 700 }}>⏱ {left}s</span>
+      </div>
+      <div style={{ position: "relative", height: 5, background: C.line, borderRadius: 99, marginBottom: 18, overflow: "hidden" }}>
+        <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${left / 8 * 100}%`, background: left <= 3 ? C.merah : C.teal, transition: "width 1s linear" }} />
+      </div>
+
+      {/* 对方说话（气泡） */}
+      <div style={{ background: C.indigoDeep, color: "#F2E8D5", borderRadius: "16px 16px 16px 4px", padding: "14px 16px", marginBottom: 6, maxWidth: "88%" }}>
+        <p style={{ margin: 0, fontFamily: font.display, fontStyle: "italic", fontSize: 17 }}>{line.id}</p>
+        {showZh && <p style={{ margin: "6px 0 0", fontSize: 12.5, color: "#8FA0CC" }}>{line.zh}</p>}
+      </div>
+      <div style={{ display: "flex", gap: 14, marginBottom: 18 }}>
+        <button onClick={() => speak(line.id, 0.75)} style={{ all: "unset", cursor: "pointer", fontSize: 12.5, color: C.teal, fontWeight: 700 }}>🔊 重听</button>
+        <button onClick={() => setShowZh(true)} style={{ all: "unset", cursor: "pointer", fontSize: 12.5, color: C.faint }}>看中文提示</button>
+      </div>
+
+      <p style={{ fontSize: 13, color: C.faint, margin: "0 0 10px" }}>8秒内选出你的回应，选完<b>大声读出来</b>：</p>
+      <div style={{ display: "grid", gap: 10 }}>
+        {options.map((r, k) => {
+          let bg = C.paper, bd = C.line, col = C.ink;
+          if (picked !== null) {
+            if (r[2]) { bg = "#EAF4F1"; bd = C.teal; col = C.teal; }
+            else if (picked === r) { bg = "#FBEAEA"; bd = C.merah; col = C.merah; }
+          }
+          return (
+            <button key={k} onClick={() => pick(r)} style={{ all: "unset", cursor: picked === null ? "pointer" : "default", padding: "12px 14px", borderRadius: "16px 16px 4px 16px", border: `1.5px solid ${bd}`, background: bg, transition: "all .2s" }}>
+              <span style={{ fontFamily: font.display, fontStyle: "italic", fontSize: 15.5, color: col, display: "block" }}>{r[0]}</span>
+              {picked !== null && <span style={{ fontSize: 12, color: C.faint }}>{r[1]}</span>}
+            </button>
+          );
+        })}
+      </div>
+      {picked === "timeout" && <p style={{ fontSize: 13, color: C.merah, margin: "12px 0 0", textAlign: "center" }}>超时了！真实对话的沉默就是这种感觉——听正确答案，跟读一遍再继续。</p>}
+      {picked !== null && (
+        <button style={{ ...btnPrimary, marginTop: 14 }} onClick={next}>{i + 1 >= scene.lines.length ? "查看结果" : "下一回合 →"}</button>
+      )}
+    </div>
+  );
+}
+
+/* ---------- 主应用 ---------- */
+function App() {
+  const [mode, setMode] = useState(null); // null | flash | listen | speak | scene
+  const [scene, setScene] = useState(null);
+
+  // 预加载语音列表（部分浏览器首次为空）
+  useEffect(() => { window.speechSynthesis?.getVoices(); }, []);
+
+  const MODES = [
+    { key: "flash", icon: "⚡", name: "闪电反应", desc: "6秒倒计时·中文→脱口说印尼语", pain: "治「反应不过来」" },
+    { key: "listen", icon: "🎧", name: "盲听理解", desc: "先听不看字·语速三档可调", pain: "治「听不流畅」" },
+    { key: "speak", icon: "🎤", name: "跟读评分", desc: "听示范→录音·逐词比对打分", pain: "治「发音不准」" },
+    { key: "scene", icon: "🎬", name: "场景实战", desc: "6大场景·8秒限时应答", pain: "综合流利度" },
+  ];
+
+  return (
+    <div style={{ fontFamily: font.body, background: `linear-gradient(180deg, ${C.sand}, #FBF8F1)`, minHeight: "100vh", color: C.ink }}>
+      <div style={{ maxWidth: 520, margin: "0 auto", padding: "0 18px 60px" }}>
+        <header style={{ padding: "26px 0 6px" }}>
+          <h1 style={{ margin: 0, fontFamily: font.display, fontSize: 26, color: C.indigoDeep }}>
+            Bahasa<span style={{ color: C.merah }}>Flow</span>
+          </h1>
+          <p style={{ margin: "2px 0 0", fontSize: 12, color: C.faint, letterSpacing: 2 }}>流利度训练营 · 听得懂 说得快 发音准</p>
+        </header>
+
+        {mode === null && (
+          <>
+            <p style={{ fontSize: 13.5, lineHeight: 1.8, color: C.faint, margin: "14px 0 20px" }}>
+              你已掌握核心150词——现在的瓶颈不是词汇量，而是<b style={{ color: C.ink }}>提取速度</b>。
+              所有训练都带时间压力和真实语音，逼大脑从"翻译思维"切换到"直觉反应"。
+              建议每天：⚡5分钟 + 🎧8分钟 + 🎤8分钟 + 🎬9分钟 = 30分钟。
+            </p>
+            <div style={{ display: "grid", gap: 12 }}>
+              {MODES.map(m => (
+                <button key={m.key} onClick={() => setMode(m.key)} style={{
+                  all: "unset", cursor: "pointer", background: C.paper, border: `1.5px solid ${C.line}`, borderRadius: 16,
+                  padding: "16px 18px", display: "flex", alignItems: "center", gap: 14, transition: "all .2s",
+                  boxShadow: "0 2px 8px rgba(30,39,73,.05)",
+                }}>
+                  <span style={{ fontSize: 30 }}>{m.icon}</span>
+                  <span style={{ flex: 1 }}>
+                    <span style={{ display: "block", fontWeight: 700, fontSize: 16, color: C.indigoDeep }}>{m.name}</span>
+                    <span style={{ display: "block", fontSize: 12.5, color: C.faint, marginTop: 2 }}>{m.desc}</span>
+                  </span>
+                  <span style={{ fontSize: 11, color: C.merah, fontWeight: 700, whiteSpace: "nowrap" }}>{m.pain}</span>
+                </button>
+              ))}
+            </div>
+            <p style={{ fontSize: 12, color: C.faint, marginTop: 18, lineHeight: 1.7 }}>
+              🔊 本App使用浏览器内置的印尼语真人语音（TTS）和语音识别，🎤跟读评分需要麦克风权限，Chrome 体验最佳。
+            </p>
+          </>
+        )}
+
+        {mode !== null && mode !== "scene" && (
+          <div style={{ background: C.paper, border: `1px solid ${C.line}`, borderRadius: 18, padding: "20px", marginTop: 14, boxShadow: "0 4px 16px rgba(30,39,73,.06)" }}>
+            {mode === "flash" && <FlashDrill onExit={() => setMode(null)} />}
+            {mode === "listen" && <ListenDrill onExit={() => setMode(null)} />}
+            {mode === "speak" && <SpeakDrill onExit={() => setMode(null)} />}
+          </div>
+        )}
+
+        {mode === "scene" && scene === null && (
+          <div style={{ marginTop: 14 }}>
+            <button onClick={() => setMode(null)} style={{ all: "unset", cursor: "pointer", fontSize: 13, color: C.faint, marginBottom: 12, display: "block" }}>← 返回</button>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              {SCENES.map(s => (
+                <button key={s.id} onClick={() => setScene(s)} style={{
+                  all: "unset", cursor: "pointer", background: C.paper, border: `1.5px solid ${C.line}`, borderRadius: 16,
+                  padding: "18px 14px", textAlign: "center", boxShadow: "0 2px 8px rgba(30,39,73,.05)",
+                }}>
+                  <span style={{ fontSize: 32, display: "block" }}>{s.icon}</span>
+                  <span style={{ fontWeight: 700, fontSize: 15, color: C.indigoDeep, display: "block", marginTop: 6 }}>{s.name}</span>
+                  <span style={{ fontSize: 12, color: C.faint }}>{s.lines.length} 回合</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {mode === "scene" && scene !== null && (
+          <div style={{ background: C.paper, border: `1px solid ${C.line}`, borderRadius: 18, padding: "20px", marginTop: 14, boxShadow: "0 4px 16px rgba(30,39,73,.06)" }}>
+            <SceneDrill scene={scene} onExit={() => setScene(null)} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
