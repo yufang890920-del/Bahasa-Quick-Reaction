@@ -99,6 +99,106 @@ var SCENES=[
  {id:"Sesudah makan. Istirahat yang cukup ya.",zh:"饭后。要好好休息。",r:[["Terima kasih banyak, Dokter.","非常感谢，医生。",1],["Berapa harganya baju ini?","这件衣服多少钱？",0],["Saya paling suka hujan.","我最喜欢下雨。",0]]}]}
 ];
 
+/* ============ 助记词典（谐音+联想） ============ */
+var MNEMO={
+"mau":"谐音「猫」——猫见鱼就【想要】：mau=想要",
+"saya":"谐音「傻呀」——自嘲「傻呀是【我】」：saya=我",
+"berapa":"谐音「杯拉爬」——问价先端【杯】：berapa=多少",
+"harganya":"harga(价格)+nya(它的)——「哈！价钱呢？」：它的价格",
+"mana":"本身就像中文的「哪」拖长音：mana=哪里",
+"di":"di=在（放地点前），di mana=在哪",
+"tidak":"谐音「体大」——身体太大【不】能进门：tidak=不",
+"mengerti":"谐音「懵个体」——听不懂时整个人是懵的：mengerti=明白",
+"tolong":"谐音「多浪」——海上多浪要人帮：tolong=请/救命",
+"ulangi":"ulang(重复)+i——「呜浪」一遍遍拍岸：ulangi=重复",
+"lagi":"谐音「拉给」——「再拉给我一次」：lagi=再/又",
+"sudah":"谐音「速哒」——速度哒的一下就【已经】做完：sudah=已经",
+"makan":"谐音「马干」——马干完活要【吃】：makan=吃",
+"sedang":"谐音「四当」——事情【正当】进行中：sedang=正在",
+"belajar":"谐音「白拉扎」——白天拉着书扎进去【学】：belajar=学习",
+"sampai":"谐音「三派」——三派人马【到达】会合：sampai=到达/直到",
+"jumpa":"谐音「junk趴」——见面开心到趴下：jumpa=见面",
+"besok":"谐音「北说」——北边的人说【明天】见：besok=明天",
+"terlalu":"谐音「太啦噜」——语气都在喊太过了：terlalu=太/过于",
+"mahal":"谐音「马哈」——马都哈气嫌【贵】：mahal=贵",
+"bisa":"谐音「比萨」——会做比萨=有【能力】：bisa=能/可以",
+"kurang":"谐音「哭朗」——钱不够哭出声：kurang=少/减",
+"boleh":"谐音「波列」——征得同意才能列队过：boleh=可以（许可）",
+"bertanya":"ber+tanya(问)——「打听呀」：bertanya=提问",
+"lapar":"谐音「拉怕」——饿到怕：lapar=饿",
+"enak":"谐音「诶那个」——好吃到只会说「诶那个！」：enak=好吃",
+"sekali":"谐音「四嘎里」——好吃到心思都嘎在里面：sekali=非常（放形容词后）",
+"tunggu":"谐音「等咕」——肚子咕咕叫着等：tunggu=等",
+"sebentar":"谐音「四本达」——翻四本书就到：sebentar=一会儿",
+"belok":"谐音「杯咯」——端着杯子转弯洒了咯：belok=转弯",
+"kiri":"谐音「给里」——东西给到左手里：kiri=左",
+"kanan":"谐音「嘎南」——右转去嘎南边：kanan=右",
+"lurus":"谐音「录路四」——录着路一直走：lurus=直",
+"terus":"谐音「特路四」——特别能走，不停：terus=继续/一直",
+"lama":"谐音「拉马」——拉着马走得久：lama=久",
+"setuju":"se(同)+tuju(方向)——大家朝同一方向=【同意】：setuju=同意",
+"ide":"来自英语idea：ide=主意",
+"bagus":"谐音「巴古斯」——古斯家的东西都好：bagus=好的",
+"senang":"谐音「四囊」——开心装进四个口袋：senang=开心",
+"kamu":"谐音「卡母」——卡通母鸡指着【你】：kamu=你",
+"kapan":"谐音「卡盘」——光盘卡住问几点了：kapan=什么时候",
+"kenapa":"谐音「可拿怕」——为什么可怕地拿走：kenapa=为什么",
+"suka":"谐音「舒卡」——喜欢到舒服地刷卡：suka=喜欢",
+"pedas":"谐音「批打四」——辣到想批打厨师四下：pedas=辣",
+"beri":"谐音「杯里」——请给我倒杯里：beri=给",
+"air":"别按英文读！读「阿伊尔」：air=水，air putih=白开水",
+"ayo":"谐音「啊哟」——「啊哟走吧！」：ayo=来吧/一起",
+"pergi":"谐音「跑给」——跑着给他送去：pergi=去",
+"kepala":"谐音「可怕啦」——头疼起来可怕啦：kepala=头",
+"sakit":"谐音「杀鸡的」——疼得像被杀的鸡叫：sakit=疼/生病",
+"perlu":"谐音「泼露」——需要泼水才露出来：perlu=需要",
+"istirahat":"这么长的词念完就该休息了：istirahat=休息",
+"terima":"谐音「特里马」——特地骑马来道谢：terima kasih=谢谢",
+"kasih":"kasih=爱/给予，terima kasih直译「收到爱」=谢谢",
+"pesan":"谐音「北三」——去北边第三桌点菜：pesan=点(菜)/预订",
+"stasiun":"英语station的变体：stasiun=车站",
+"janji":"谐音「兼职」——约好去兼职：janji=约定",
+"waktu":"谐音「哇克图」——看表哇一声：waktu=时间",
+"jam":"jam=点钟/小时，jam berapa=几点"
+};
+var TIPS={
+"Saya mau...":"万能开头句！mau后接任何名词/动词：mau makan想吃、mau ini要这个。记「傻呀猫要」开头，后面随便接。",
+"Berapa harganya?":"berapa(多少)+harga(价格)+nya(它)。问价三连：指着东西→说这句→听数字。",
+"Tolong ulangi lagi":"救场三件套之一！tolong开头永远礼貌。听不懂就说它，比沉默强100倍。「多浪·呜浪·拉给」。",
+"Saya tidak mengerti":"救场三件套之二。tidak+动词=否定。先说这句再接Tolong ulangi lagi，完美衔接。",
+"Bisa kurang?":"砍价只需两个词！bisa(能)+kurang(减)——「比萨哭朗」：比萨太贵哭出声。配合心痛表情效果翻倍。",
+"Sampai jumpa besok":"sampai(直到)+jumpa(见面)+besok(明天)。告别公式：sampai jumpa+任意时间词。",
+"Kamu sedang apa?":"sedang+apa=正在+什么。时态三兄弟：sudah已经/sedang正在/akan将要——动词永不变形，全靠这三个词！",
+"Boleh saya bertanya?":"boleh开头=征求许可的万能句式。boleh saya+动词：boleh saya lihat能看吗、boleh saya duduk能坐吗。"
+};
+/* ============ 错题本存储 ============ */
+function loadErr(){try{return JSON.parse(localStorage.getItem("bf_errors")||"[]")}catch(e){return[]}}
+function saveErr(list){try{localStorage.setItem("bf_errors",JSON.stringify(list))}catch(e){}}
+function logErr(id,zh,type){
+  var list=loadErr(),found=null;
+  for(var i=0;i<list.length;i++){if(list[i].id===id){found=list[i];break}}
+  if(found){found.n++;found.t=Date.now()}
+  else list.push({id:id,zh:zh,type:type,n:1,t:Date.now()});
+  saveErr(list);
+}
+function removeErr(id){
+  var list=loadErr(),out=[];
+  for(var i=0;i<list.length;i++){if(list[i].id!==id)out.push(list[i])}
+  saveErr(out);
+}
+function genMnemo(sentence){
+  var key=sentence.replace(/\s+$/,"");
+  if(TIPS[key])return[["💡 句型助记",TIPS[key]]];
+  var words=sentence.toLowerCase().replace(/[.,!?]/g,"").split(/\s+/);
+  var out=[],seen={};
+  for(var i=0;i<words.length;i++){
+    var w=words[i];
+    if(MNEMO[w]&&!seen[w]){out.push([w,MNEMO[w]]);seen[w]=1}
+  }
+  if(out.length===0)out.push(["💡","把句子拆成2-3块，每块大声读3遍再连读3遍——肌肉记忆比死记更牢。"]);
+  return out;
+}
+
 /* ============ 工具 ============ */
 function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
@@ -119,6 +219,7 @@ function home(){
   '<button class="mode" onclick="listenStart()"><span class="ic">🎧</span><span><span class="nm">盲听理解</span><span class="ds">先听不看字·语速三档可调</span></span><span class="pn">治「听不流畅」</span></button>'+
   '<button class="mode" onclick="speakStart()"><span class="ic">🎤</span><span><span class="nm">跟读评分</span><span class="ds">听示范→录音·逐词比对打分</span></span><span class="pn">治「发音不准」</span></button>'+
   '<button class="mode" onclick="sceneMenu()"><span class="ic">🎬</span><span><span class="nm">场景实战</span><span class="ds">6大场景·8秒限时应答</span></span><span class="pn">综合流利度</span></button>'+
+  '<button class="mode" onclick="errBook()"><span class="ic">📒</span><span><span class="nm">错题本 + 助记</span><span class="ds">自动收集你答错的词句·谐音联想记忆</span></span><span class="pn">'+(loadErr().length>0?loadErr().length+" 条待攻克":"暂无错题")+'</span></button>'+
   '</div>'+
   '<p class="tip">🔊 使用手机浏览器内置的印尼语语音朗读与识别，🎤评分需麦克风权限，安卓 Chrome 体验最佳。若朗读无声，请在系统设置中下载印尼语语音包。</p>';
 }
@@ -152,6 +253,7 @@ function flashReveal(){
 }
 function flashGrade(ok){
   if(ok)F.ok++;
+  else logErr(F.pool[F.i][1],F.pool[F.i][0],"flash");
   F.i++;
   if(F.i>=F.pool.length){
     app.innerHTML='<div class="card center"><div style="font-size:44px">⚡</div>'+
@@ -208,6 +310,7 @@ function speakRec(){
     var words=[],hit=0;
     for(var i=0;i<t.length;i++){var ok=h.indexOf(t[i])>=0;if(ok)hit++;words.push([t[i],ok])}
     S.result={heard:heard,pct:Math.round(hit/t.length*100),words:words};
+    if(S.result.pct<60)logErr(cur,"发音待加强","speak");
     S.listening=false;speakRender();
   };
   rec.onerror=function(e){S.err=(e.error==="not-allowed"?"mic":"other");S.listening=false;speakRender()};
@@ -275,7 +378,7 @@ function sceneGo(){
     var b=document.getElementById("sbar"),n=document.getElementById("snum");
     if(b){b.style.width=(left/8*100)+"%";if(left<=3)b.style.background="var(--merah)"}
     if(n){n.textContent="⏱ "+left+"s";if(left<=3)n.style.color="var(--merah)"}
-    if(left<=0){clearT();G.picked="timeout";render(true)}
+    if(left<=0){clearT();G.picked="timeout";for(var q=0;q<G.opts.length;q++){if(G.opts[q][2]){logErr(G.opts[q][0],G.opts[q][1],"scene");break}}render(true)}
   },1000);
   function render(showAns){
     var h='<div class="card">'+
@@ -310,6 +413,7 @@ function scenePick(k){
   clearT();G.picked=k;
   var r=G.opts[k];
   if(r[2]){G.score++;speak(r[0],0.85)}
+  else{for(var i=0;i<G.opts.length;i++){if(G.opts[i][2]){logErr(G.opts[i][0],G.opts[i][1],"scene");break}}}
   G.render(true);
 }
 function sceneNext(){
@@ -322,6 +426,51 @@ function sceneNext(){
     '<div style="display:grid;gap:10px"><button class="btn red" onclick="sceneStart('+G.si+')">重跑本场景</button>'+
     '<button class="btn ghost" onclick="sceneMenu()">选择其他场景</button></div></div>';
   }else{G.i++;sceneGo()}
+}
+
+/* ============ 📒 错题本 + 助记 ============ */
+function errBook(){
+  clearT();window.speechSynthesis&&window.speechSynthesis.cancel();
+  var list=loadErr().slice().sort(function(a,b){return b.n-a.n});
+  var h='<button class="back" onclick="home()">← 返回</button><div class="card">';
+  if(list.length===0){
+    h+='<div class="center" style="padding:20px 0"><div style="font-size:44px">📒</div>'+
+    '<p class="faint" style="font-size:14px;line-height:1.8">错题本还是空的。去训练吧——<br>闪电反应里自评「没反应过来」、场景对话答错或超时、<br>跟读评分低于60分的句子都会自动收进来。</p>'+
+    '<button class="btn" onclick="home()">去训练</button></div>';
+  }else{
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'+
+    '<span style="font-size:14px;font-weight:700;color:var(--deep)">📒 '+list.length+' 条待攻克</span>'+
+    '<span style="font-size:12px" class="faint">按错误次数排序</span></div>'+
+    '<button class="btn red" style="margin-bottom:16px" onclick="errDrill()">⚡ 用错题重练一轮</button>';
+    var typeIcon={flash:"⚡",scene:"🎬",speak:"🎤"};
+    for(var i=0;i<list.length;i++){
+      var e=list[i],mn=genMnemo(e.id),mh="";
+      for(var m=0;m<mn.length;m++){
+        mh+='<p style="font-size:12.5px;line-height:1.7;margin:4px 0 0;color:var(--ink)"><b style="color:var(--gold)">'+esc(mn[m][0])+'</b> '+esc(mn[m][1])+'</p>';
+      }
+      h+='<div style="border-top:1px solid var(--line);padding:14px 0">'+
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">'+
+      '<span class="serif" style="font-size:17px;color:var(--deep)">'+esc(e.id)+'</span>'+
+      '<span style="font-size:11px;color:var(--merah);font-weight:700;white-space:nowrap">'+(typeIcon[e.type]||"")+' 错'+e.n+'次</span></div>'+
+      '<p style="font-size:12.5px;margin:2px 0 6px" class="faint">'+esc(e.zh)+'</p>'+
+      '<div style="background:var(--sand);border-radius:10px;padding:10px 12px">'+mh+'</div>'+
+      '<div style="display:flex;gap:12px;margin-top:8px">'+
+      '<button class="back" style="margin:0;color:var(--teal);font-weight:700" onclick="speak('+JSON.stringify(e.id).replace(/"/g,"&quot;")+',0.8)">🔊 听发音</button>'+
+      '<button class="back" style="margin:0" onclick="errMaster('+JSON.stringify(e.id).replace(/"/g,"&quot;")+')">✓ 已掌握，移除</button></div></div>';
+    }
+    h+='<p style="font-size:12px;margin-top:12px" class="tip">💾 错题记录保存在这台手机的浏览器里；换设备或清除浏览器数据会清空。</p>';
+  }
+  app.innerHTML=h+'</div>';
+}
+function errMaster(id){removeErr(id);errBook()}
+function errDrill(){
+  var list=loadErr();
+  if(list.length===0){errBook();return}
+  var pool=[];
+  var sorted=list.slice().sort(function(a,b){return b.n-a.n}).slice(0,10);
+  for(var i=0;i<sorted.length;i++)pool.push([sorted[i].zh,sorted[i].id]);
+  F={pool:shuffle(pool),i:0,ok:0};
+  flashGo();
 }
 
 home();
