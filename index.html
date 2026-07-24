@@ -64,6 +64,10 @@ h1 b{color:var(--merah)}
 .freebtn{cursor:pointer;flex:1;min-width:30%;background:var(--paper);border:1.5px solid var(--line);border-radius:12px;padding:12px 6px;text-align:center;font-family:inherit;font-size:12.5px;font-weight:600;color:var(--ink)}
 .freebtn .i{font-size:22px;display:block;margin-bottom:2px}
 h3.sec{font-size:13px;color:var(--merah);letter-spacing:1px;margin:0 0 8px}
+.livecard{background:#F8F1E3;border:1px solid var(--line);border-radius:16px;padding:18px;text-align:center}
+.liveword{font-family:Georgia,serif;font-style:italic;font-size:34px;color:var(--merah);margin:0 0 4px}
+.livefamily{font-size:13px;color:var(--teal);margin:0 0 16px}
+.livetabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}
 </style>
 </head>
 <body>
@@ -113,6 +117,13 @@ var DAYS=[
 ];
 /* 场景对话库 */
 var SCENES=[
+{icon:"📱",name:"直播带货",unlock:1,lines:[
+ {id:"Yang mau, ketik “mau” dulu, ya.",zh:"想要的先打“mau”哦。",r:[["Mau, Kak! Saya mau ambil dua paket.","要，主播！我要拍两套。",1],["Saya sedang mencari stasiun.","我正在找车站。",0],["Tidak pedas, tolong.","请不要辣。",0]]},
+ {id:"Siapa yang belum dapat?",zh:"谁还没抢到？",r:[["Saya belum dapat, Kak.","我还没抢到。",1],["Saya sudah makan.","我已经吃过了。",0],["Belok kanan di sana.","在那里右转。",0]]},
+ {id:"Aku tambah lima lagi. Siap-siap, fokus!",zh:"我再补五个。准备好，注意看！",r:[["Siap, Kak. Saya tunggu.","准备好了，我等着。",1],["Bisa kurang sedikit?","能便宜一点吗？",0],["Kepala saya sakit.","我头疼。",0]]},
+ {id:"Tiga, dua, satu, ambil!",zh:"三、二、一，抢！",r:[["Sudah saya ambil, Kak!","我已经拍下了！",1],["Sampai jumpa besok.","明天见。",0],["Saya mau es teh.","我要冰茶。",0]]},
+ {id:"Kalau sudah dapat, langsung bayar, ya.",zh:"抢到后要马上付款哦。",r:[["Baik, saya langsung bayar.","好的，我马上付款。",1],["Saya tinggal di Jakarta.","我住在雅加达。",0],["Tolong ulangi lagi.","请再说一遍。",0]]},
+ {id:"Produknya ada di etalase yang aku sematkan.",zh:"商品在我置顶的商品栏里。",r:[["Baik, saya klik etalasenya.","好的，我点击商品栏。",1],["Saya mau ke rumah sakit.","我要去医院。",0],["Hujan deras sekali.","雨下得很大。",0]]}]},
 {icon:"🍜",name:"路边餐馆",unlock:9,lines:[
  {id:"Mau pesan apa?",zh:"想点什么？",r:[["Saya mau nasi goreng satu.","我要一份炒饭。",1],["Saya dari Tiongkok.","我来自中国。",0],["Belok kiri.","向左转。",0]]},
  {id:"Mau minum apa?",zh:"想喝什么？",r:[["Es teh satu, tolong.","请来一杯冰茶。",1],["Umur saya dua puluh.","我20岁。",0],["Sampai jumpa!","再见！",0]]},
@@ -145,6 +156,44 @@ var SCENES=[
  {id:"Apakah Anda juga demam?",zh:"您也发烧吗？",r:[["Ya, badan saya panas.","是的，我身体发热。",1],["Ya, saya suka musik.","是的，我喜欢音乐。",0],["Ya, ini murah sekali.","是的，这很便宜。",0]]},
  {id:"Minum obat ini dua kali sehari.",zh:"这个药一天吃两次。",r:[["Baik, sebelum atau sesudah makan?","好的，饭前还是饭后？",1],["Baik, saya mau es teh.","好的，我要冰茶。",0],["Baik, belok kanan ya.","好的，右转对吧。",0]]},
  {id:"Sesudah makan. Istirahat yang cukup ya.",zh:"饭后。要好好休息。",r:[["Terima kasih banyak, Dokter.","非常感谢，医生。",1],["Berapa harganya baju ini?","这件衣服多少钱？",0],["Saya paling suka hujan.","我最喜欢下雨。",0]]}]}
+];
+/* 直播专项：清洗自真实直播口语的高频词根与句型 */
+var LIVE_VOCAB=[
+["mau","想要、要","yang mau · maunya","Yang mau, ketik “mau” dulu.","想要的先打“mau”。"],
+["dapat","得到、抢到","belum dapat · sudah dapat","Siapa yang belum dapat?","谁还没抢到？"],
+["tambah","增加、补货","tambah lagi · ditambah","Aku tambah lima lagi.","我再补五个。"],
+["ambil","拿、拍下","langsung ambil · sudah ambil","Tiga, dua, satu, ambil!","三、二、一，抢！"],
+["bayar","付款","langsung bayar · pembayaran","Kalau dapat, langsung bayar.","抢到就马上付款。"],
+["ketik","打字、输入","ketik “mau”","Ketik “mau” dulu, ya.","先输入“mau”哦。"],
+["komen","评论、留言","komen “mau” · komentar","Yang mau, komen “mau”.","想要的评论“mau”。"],
+["siap","准备好","siap-siap · bersiap","Siap-siap, fokus!","准备好，注意看！"],
+["habis","完、售罄","sudah habis · kehabisan","Sudah habis? Aku tambah lagi.","卖完了吗？我再补一些。"],
+["turun","下降、降价","harganya turun · menurunkan","Harganya sudah turun.","价格已经降了。"],
+["semat","固定、置顶","sematkan · disematkan","Klik produk yang aku sematkan.","点击我置顶的商品。"],
+["kirim","寄送","dikirim · pengiriman","Bisa dikirim ke seluruh Indonesia.","可以寄到印尼全境。"],
+["tunggu","等待","tunggu dulu · sedang menunggu","Tunggu sebentar, ya.","请稍等一下。"],
+["harga","价格","harganya · harga turun","Kamu dapat harga seratus ribu.","你拿到十万盾的价格。"],
+["akhir","末尾、最后","terakhir · akhirnya","Terakhir, siapa lagi yang mau?","最后一轮，还有谁想要？"]
+];
+var LIVE_PHRASES=[
+["想要的先打“mau”","Yang mau, ketik “mau” dulu."],
+["谁还没抢到？","Siapa yang belum dapat?"],
+["我还没抢到","Saya belum dapat."],
+["我再补五个","Aku tambah lima lagi."],
+["要不要我再补一些？","Mau nggak aku tambah lagi?"],
+["准备好，注意看！","Siap-siap, fokus!"],
+["马上了","Dikit lagi."],
+["最后一轮","Terakhir, ya!"],
+["优惠券还有两分钟失效","Dua menit lagi sebelum vouchernya hangus."],
+["三、二、一，抢！","Tiga, dua, satu, ambil!"],
+["抢到就马上付款","Kalau dapat, langsung bayar."],
+["我要拍两套","Saya mau ambil dua paket."],
+["价格已经降了","Harganya sudah turun."],
+["商品在置顶的商品栏里","Produknya ada di etalase yang aku sematkan."],
+["已经卖完了吗？","Sudah habis?"],
+["我再补一些哦","Aku tambah lagi, ya."],
+["可以寄到印尼全境","Bisa dikirim ke seluruh Indonesia."],
+["只要住在印尼就可以寄送","Selama kamu tinggal di Indonesia, bisa dikirim."]
 ];
 /* ============ 助记词典（谐音+联想） ============ */
 var MNEMO={
@@ -394,6 +443,7 @@ function home(){
   '<span style="font-size:12px" class="faint">点数字跳转任意一天</span></div>'+
   '<div class="dots">'+dots+'</div></div>'+
   '<div class="card"><h3 class="sec">自由加练（不占每日进度）</h3><div class="freerow">'+
+  '<button class="freebtn" onclick="liveMenu()"><span class="i">📱</span>直播专项</button>'+
   '<button class="freebtn" onclick="sceneMenu()"><span class="i">🎬</span>场景实战</button>'+
   '<button class="freebtn" onclick="errBook()"><span class="i">📒</span>错题本'+(errN>0?" ("+errN+")":"")+'</button>'+
   '<button class="freebtn" onclick="freeFlash()"><span class="i">⚡</span>随机闪电</button>'+
@@ -401,6 +451,55 @@ function home(){
   '<p style="font-size:12px;line-height:1.7;margin-top:14px" class="faint">📚 方法：每天=学(词汇语法)→⚡反应→🎧盲听→🎤跟读，测验自动混入前几天内容做间隔复习。答错的自动进错题本。🔊 需要浏览器印尼语语音，安卓Chrome最佳。</p>';
   updateHeader();
 }
+
+/* ============ 📱 直播高频专项 ============ */
+var LW=0,LP=0;
+function liveMenu(){
+  clearT();window.speechSynthesis&&window.speechSynthesis.cancel();
+  app.innerHTML='<button class="back" onclick="home()">← 返回主页</button><div class="card">'+
+  '<span class="pill" style="color:var(--merah);border-color:rgba(201,58,58,.35)">📱 直播带货专项</span>'+
+  '<h2 style="font-family:Georgia,serif;color:var(--deep);font-size:23px;margin:12px 0 5px">先懂词根，再练整句</h2>'+
+  '<p style="font-size:13px;line-height:1.7;margin:0 0 18px" class="faint">15个高频词根 · 18句真实直播口语 · 6回合场景实战</p>'+
+  '<div style="display:grid;gap:10px">'+
+  '<button class="btn red" onclick="liveWords()">① 词根卡片</button>'+
+  '<button class="btn" onclick="livePhrases()">② 直播句型</button>'+
+  '<button class="btn teal" onclick="liveFlash()">③ 6秒闪电反应</button>'+
+  '<button class="btn ghost" onclick="sceneStart(0)">④ 直播实战</button></div></div>';
+}
+function liveWords(){
+  clearT();var v=LIVE_VOCAB[LW%LIVE_VOCAB.length];
+  app.innerHTML='<button class="back" onclick="liveMenu()">← 返回直播专项</button><div class="card">'+
+  '<div class="livetabs"><button class="lvbtn on" onclick="liveWords()">词根卡片</button><button class="lvbtn" onclick="livePhrases()">直播句型</button></div>'+
+  '<p style="font-size:12.5px;margin:0 0 12px" class="faint center">第 '+(LW+1)+'/'+LIVE_VOCAB.length+' 个 · 先读词根，再听完整句</p>'+
+  '<div class="livecard"><h2 class="liveword">'+esc(v[0])+'</h2>'+
+  '<p style="font-size:16px;font-weight:700;margin:0 0 12px">'+esc(v[1])+'</p>'+
+  '<p class="livefamily">'+esc(v[2])+'</p>'+
+  '<p class="serif" style="font-size:18px;color:var(--deep);margin:0 0 4px">'+esc(v[3])+'</p>'+
+  '<p style="font-size:13px;margin:0" class="faint">'+esc(v[4])+'</p></div>'+
+  '<div class="grid2" style="margin-top:14px"><button class="btn teal" onclick="speak('+JSON.stringify(v[3]).replace(/"/g,"&quot;")+',0.75)">🔊 听例句</button>'+
+  '<button class="btn" onclick="liveWordNext()">下一个 →</button></div></div>';
+}
+function liveWordNext(){LW=(LW+1)%LIVE_VOCAB.length;liveWords()}
+function livePhrases(){
+  clearT();var p=LIVE_PHRASES[LP%LIVE_PHRASES.length];
+  app.innerHTML='<button class="back" onclick="liveMenu()">← 返回直播专项</button><div class="card center">'+
+  '<div class="livetabs"><button class="lvbtn" onclick="liveWords()">词根卡片</button><button class="lvbtn on" onclick="livePhrases()">直播句型</button></div>'+
+  '<p style="font-size:12.5px;margin:0 0 16px" class="faint">第 '+(LP+1)+'/'+LIVE_PHRASES.length+' 句 · 看到中文，先大声说印尼语</p>'+
+  '<h2 style="font-size:27px;line-height:1.4;margin:20px 0">'+esc(p[0])+'</h2>'+
+  '<button class="btn ghost" onclick="livePhraseReveal()">揭晓答案</button></div>';
+}
+function livePhraseReveal(){
+  var p=LIVE_PHRASES[LP%LIVE_PHRASES.length];speak(p[1],0.8);
+  app.innerHTML='<button class="back" onclick="liveMenu()">← 返回直播专项</button><div class="card center">'+
+  '<p style="font-size:12.5px;margin:0 0 10px" class="faint">第 '+(LP+1)+'/'+LIVE_PHRASES.length+' 句</p>'+
+  '<h2 style="font-size:24px;line-height:1.4;margin:8px 0">'+esc(p[0])+'</h2>'+
+  '<div style="background:#EAF4F1;border:1px solid rgba(62,124,123,.35);border-radius:14px;padding:16px;margin:16px 0">'+
+  '<p class="serif" style="font-size:21px;color:var(--deep);margin:0">'+esc(p[1])+'</p></div>'+
+  '<div class="grid2"><button class="btn teal" onclick="speak('+JSON.stringify(p[1]).replace(/"/g,"&quot;")+',0.75)">🔊 再听一遍</button>'+
+  '<button class="btn" onclick="livePhraseNext()">下一句 →</button></div></div>';
+}
+function livePhraseNext(){LP=(LP+1)%LIVE_PHRASES.length;livePhrases()}
+function liveFlash(){F={pool:shuffle(LIVE_PHRASES),i:0,ok:0,mode:"free"};flashGo()}
 
 /* ============ 每日课程流程 D={di,step} ============ */
 var D={};
