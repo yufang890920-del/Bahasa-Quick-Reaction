@@ -68,6 +68,13 @@ h3.sec{font-size:13px;color:var(--merah);letter-spacing:1px;margin:0 0 8px}
 .liveword{font-family:Georgia,serif;font-style:italic;font-size:34px;color:var(--merah);margin:0 0 4px}
 .livefamily{font-size:13px;color:var(--teal);margin:0 0 16px}
 .livetabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}
+.advhero{background:linear-gradient(135deg,#1B2C5C,#334A82);color:#F2E8D5;border-radius:18px;padding:20px;margin-top:14px;box-shadow:0 10px 28px rgba(27,44,92,.25)}
+.advbar{height:8px;background:rgba(255,255,255,.18);border-radius:99px;overflow:hidden;margin:12px 0 6px}
+.advbar>div{height:100%;background:var(--gold);border-radius:99px}
+.advnum{display:inline-block;font-size:11px;font-weight:700;color:var(--merah);background:#FBEAEA;border-radius:99px;padding:3px 9px;margin-bottom:8px}
+.advlist{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.advitem{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px;min-width:0}
+.advitem.done{background:#EAF4F1;border-color:rgba(62,124,123,.45)}
 </style>
 </head>
 <body>
@@ -443,6 +450,7 @@ function home(){
   '<span style="font-size:12px" class="faint">点数字跳转任意一天</span></div>'+
   '<div class="dots">'+dots+'</div></div>'+
   '<div class="card"><h3 class="sec">自由加练（不占每日进度）</h3><div class="freerow">'+
+  '<button class="freebtn" onclick="advancedMenu()"><span class="i">🔥</span>151–300词</button>'+
   '<button class="freebtn" onclick="liveMenu()"><span class="i">📱</span>直播专项</button>'+
   '<button class="freebtn" onclick="sceneMenu()"><span class="i">🎬</span>场景实战</button>'+
   '<button class="freebtn" onclick="errBook()"><span class="i">📒</span>错题本'+(errN>0?" ("+errN+")":"")+'</button>'+
@@ -500,6 +508,91 @@ function livePhraseReveal(){
 }
 function livePhraseNext(){LP=(LP+1)%LIVE_PHRASES.length;livePhrases()}
 function liveFlash(){F={pool:shuffle(LIVE_PHRASES),i:0,ok:0,mode:"free"};flashGo()}
+
+/* ============ 🔥 高频词 151–300 强化营 ============ */
+var A={};
+function advancedWords(){
+  var out=[];
+  for(var d=15;d<30;d++)for(var j=0;j<DAYS[d][3].length;j++){
+    var v=DAYS[d][3][j];out.push({n:151+out.length,id:v[0],zh:v[1],theme:DAYS[d][0]});
+  }
+  return out;
+}
+function advancedMastered(){return store("bf_advanced_mastered")||[]}
+function advancedSet(n,ok){
+  var m=advancedMastered(),i=m.indexOf(n);
+  if(ok&&i<0)m.push(n);
+  if(!ok&&i>=0)m.splice(i,1);
+  store("bf_advanced_mastered",m);
+}
+function advancedMenu(){
+  clearT();window.speechSynthesis&&window.speechSynthesis.cancel();
+  var words=advancedWords(),mastered=advancedMastered(),pct=Math.round(mastered.length/words.length*100);
+  app.innerHTML='<button class="back" onclick="home()">← 返回主页</button>'+
+  '<div class="advhero"><span class="pill">第二轮 · 高频词强化</span>'+
+  '<h2 style="font-family:Georgia,serif;font-size:25px;margin:12px 0 4px">151–300 高频词</h2>'+
+  '<p style="font-size:13px;color:#B9C5E1;margin:0">每天20词 · 中文触发印尼语 · 不熟的自动循环</p>'+
+  '<div class="advbar"><div style="width:'+pct+'%"></div></div>'+
+  '<div style="display:flex;justify-content:space-between;font-size:12px;color:#B9C5E1"><span>已掌握 '+mastered.length+'/150</span><span>'+pct+'%</span></div></div>'+
+  '<div class="card"><h3 class="sec">高强度训练</h3><div style="display:grid;gap:10px">'+
+  '<button class="btn red" onclick="advancedStart(0)">① 20词速刷</button>'+
+  '<button class="btn" onclick="advancedStart(1)">② 只练未掌握</button>'+
+  '<button class="btn teal" onclick="advancedFlash()">③ 6秒中→印</button>'+
+  '<button class="btn ghost" onclick="advancedList()">④ 查看完整150词表</button></div>'+
+  '<p style="font-size:12px;line-height:1.7;margin:14px 0 0" class="faint">建议一轮20词：先看中文强制回忆，再揭晓印尼语；答“不熟”的词会留在未掌握池，下轮优先出现。</p></div>';
+}
+function advancedStart(onlyNew){
+  var words=advancedWords(),m=advancedMastered(),pool=[];
+  for(var i=0;i<words.length;i++)if(!onlyNew||m.indexOf(words[i].n)<0)pool.push(words[i]);
+  if(pool.length===0)pool=words;
+  A={pool:shuffle(pool).slice(0,20),i:0,ok:0,missed:[],revealed:false};advancedCard();
+}
+function advancedCard(){
+  clearT();
+  if(A.i>=A.pool.length){advancedDone();return}
+  var w=A.pool[A.i];
+  app.innerHTML='<button class="back" onclick="advancedMenu()">← 退出本轮</button><div class="card center">'+
+  '<p style="font-size:12.5px;margin:0 0 10px" class="faint">第 '+(A.i+1)+'/'+A.pool.length+' 词 · 先看中文，强制回忆3秒</p>'+
+  '<span class="advnum">#'+w.n+' · '+esc(w.theme)+'</span>'+
+  '<h2 style="font-size:32px;margin:18px 0 22px">'+esc(w.zh)+'</h2>'+
+  (!A.revealed?'<button class="btn ghost" onclick="advancedReveal()">揭晓印尼语</button>':
+  '<div><div class="livecard"><p class="liveword" style="margin-bottom:8px">'+esc(w.id)+'</p>'+
+  '<button class="back" style="color:var(--teal);font-weight:700;margin:0 auto" onclick="speak('+JSON.stringify(w.id).replace(/"/g,"&quot;")+',0.78)">🔊 听发音并跟读</button></div>'+
+  '<p style="font-size:13px;margin:16px 0 10px" class="faint">刚才能在3秒内想出来吗？</p>'+
+  '<div class="grid2"><button class="btn teal" onclick="advancedGrade(1)">✓ 记住了</button><button class="btn red" onclick="advancedGrade(0)">✗ 还不熟</button></div></div>')+
+  '</div>';
+}
+function advancedReveal(){A.revealed=true;speak(A.pool[A.i].id,0.78);advancedCard()}
+function advancedGrade(ok){
+  var w=A.pool[A.i];advancedSet(w.n,!!ok);
+  if(ok)A.ok++;else{A.missed.push(w);logErr(w.id,w.zh,"flash")}
+  A.i++;A.revealed=false;advancedCard();
+}
+function advancedDone(){
+  app.innerHTML='<div class="card center"><div style="font-size:46px">🔥</div>'+
+  '<h3 class="serif" style="font-size:26px;color:var(--deep);margin:8px 0 4px">'+A.ok+' / '+A.pool.length+'</h3>'+
+  '<p class="faint" style="font-size:14px;margin:0 0 18px">本轮速刷完成。'+(A.missed.length?'还有 '+A.missed.length+' 个词需要马上再过一遍。':'全部命中，继续下一组！')+'</p>'+
+  '<div style="display:grid;gap:10px">'+(A.missed.length?'<button class="btn red" onclick="advancedRetryMissed()">立即重练错词</button>':'')+
+  '<button class="btn" onclick="advancedStart(1)">下一组未掌握词</button><button class="btn ghost" onclick="advancedMenu()">返回强化营</button></div></div>';
+}
+function advancedRetryMissed(){A={pool:shuffle(A.missed),i:0,ok:0,missed:[],revealed:false};advancedCard()}
+function advancedFlash(){
+  var words=advancedWords(),m=advancedMastered(),pool=[];
+  for(var i=0;i<words.length;i++)if(m.indexOf(words[i].n)<0)pool.push([words[i].zh,words[i].id,words[i].n]);
+  if(pool.length===0)for(var j=0;j<words.length;j++)pool.push([words[j].zh,words[j].id,words[j].n]);
+  F={pool:shuffle(pool).slice(0,20),i:0,ok:0,mode:"advanced"};flashGo();
+}
+function advancedList(){
+  clearT();var words=advancedWords(),m=advancedMastered(),h='<button class="back" onclick="advancedMenu()">← 返回强化营</button><div class="card">'+
+  '<h3 class="sec">151–300 完整词表</h3><p style="font-size:12.5px;margin:0 0 14px" class="faint">绿色表示已掌握；点🔊听发音。</p><div class="advlist">';
+  for(var i=0;i<words.length;i++){var w=words[i],done=m.indexOf(w.n)>=0;
+    h+='<div class="advitem'+(done?' done':'')+'"><span style="font-size:10px;color:var(--faint)">#'+w.n+(done?' ✓':'')+'</span>'+
+    '<div class="serif" style="font-size:16px;color:var(--deep);font-weight:700;overflow-wrap:anywhere">'+esc(w.id)+'</div>'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;gap:4px"><span style="font-size:12px">'+esc(w.zh)+'</span>'+
+    '<button class="sp" onclick="speak('+JSON.stringify(w.id).replace(/"/g,"&quot;")+',0.78)">🔊</button></div></div>';
+  }
+  app.innerHTML=h+'</div></div>';
+}
 
 /* ============ 每日课程流程 D={di,step} ============ */
 var D={};
@@ -585,7 +678,7 @@ function flashGo(){
   '<h2 style="font-size:26px;margin:0 0 8px;line-height:1.4">'+esc(F.pool[F.i][0])+'</h2>'+
   '<p id="fnum" class="serif" style="font-size:40px;color:var(--gold);margin:16px 0">6</p>'+
   '<button class="btn ghost" onclick="clearT();flashReveal()">说完了 / 直接看答案</button>'+
-  '<button class="back" style="margin:18px auto 0" onclick="home()">← 退出</button></div>';
+  '<button class="back" style="margin:18px auto 0" onclick="'+(F.mode==="advanced"?'advancedMenu()':'home()')+'">← 退出</button></div>';
   timer=setInterval(function(){left--;
     var b=document.getElementById("fbar"),n=document.getElementById("fnum");
     if(b)b.style.width=(left/6*100)+"%";
@@ -606,6 +699,7 @@ function flashReveal(){
 function flashGrade(ok){
   if(ok)F.ok++;
   else logErr(F.pool[F.i][1],F.pool[F.i][0].replace(/（复习D\d+）/,""),"flash");
+  if(F.mode==="advanced")advancedSet(F.pool[F.i][2],!!ok);
   F.i++;
   if(F.i>=F.pool.length){
     if(F.mode==="day"){
@@ -614,6 +708,11 @@ function flashGrade(ok){
       '<p class="faint" style="font-size:14px;margin:0 0 20px">6秒内脱口而出的数量。答错的已自动进错题本。</p>'+
       '<div style="display:grid;gap:10px"><button class="btn" onclick="dayListen()">下一步 → 🎧 盲听训练</button>'+
       '<button class="btn ghost" onclick="dayFlash()">重来一轮</button></div></div>';
+    }else if(F.mode==="advanced"){
+      app.innerHTML='<div class="card center"><div style="font-size:44px">🔥</div>'+
+      '<h3 class="serif" style="font-size:26px;color:var(--deep);margin:8px 0 4px">'+F.ok+' / '+F.pool.length+'</h3>'+
+      '<p class="faint" style="font-size:14px;margin:0 0 20px">151–300词闪电反应完成，答错词已回到未掌握池。</p>'+
+      '<div style="display:grid;gap:10px"><button class="btn red" onclick="advancedFlash()">再来20词</button><button class="btn ghost" onclick="advancedMenu()">返回强化营</button></div></div>';
     }else{
       app.innerHTML='<div class="card center"><div style="font-size:44px">⚡</div>'+
       '<h3 class="serif" style="font-size:26px;color:var(--deep);margin:8px 0 4px">'+F.ok+' / '+F.pool.length+'</h3>'+
